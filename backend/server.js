@@ -12,7 +12,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/reservations', require('./routes/reservationRoutes'));
 app.use('/api/tables', require('./routes/tableRoutes'));
-
+app.use('/api/sms', require('./routes/smsRoutes'));
 const PORT = process.env.PORT || 5001;
 
 connectDB().then(() => {

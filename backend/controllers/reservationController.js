@@ -1,5 +1,6 @@
 const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
+const sendSMS = require('../utils/smsService');
 
 const createReservation = async (req, res) => {
   try {
@@ -24,11 +25,23 @@ const createReservation = async (req, res) => {
     }
 
     const reservation = await Reservation.create({
-      customerName, email, phoneNum, reservedDate, numGuests, tableId
+    customerName, email, phoneNum, reservedDate, numGuests, tableId
     });
 
     table.bookedSlots.push(reservedDate);
     await table.save();
+
+    await sendSMS(
+    phoneNum,
+    `This is a confirmation for a reservation at MyRestaurant. ` +
+    `Time: ${new Date(reservedDate).toLocaleString()}. ` +
+    `Table: ${table.location} (${table.seats} seats). ` +
+    `Expected guests: ${numGuests}. ` +
+    `Reservation ID: ${reservation._id}. ` +
+    `Please show this ID to staff upon arrival.`
+    );
+
+    res.status(201).json({ message: 'Reservation created', reservation });
 
     res.status(201).json({ message: 'Reservation created', reservation });
   } catch (err) {
