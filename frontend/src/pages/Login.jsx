@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
 
 const Login = () => {
@@ -28,11 +28,15 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-amber-400 mb-6">Admin Login</h1>
+        <h1 className="text-3xl font-bold text-center text-amber-400 mb-6">
+          Admin Login
+        </h1>
         <div className="border-t-2 border-amber-500 mb-4" />
         <form onSubmit={handleSubmit} className="bg-gray-800 p-6 shadow-sm rounded-lg border border-amber-800">
           {error && (
-            <div className="bg-red-900 border border-red-700 text-red-300 p-3 rounded mb-4 text-sm">{error}</div>
+            <div className="bg-red-900 border border-red-700 text-red-300 p-3 rounded mb-4 text-sm">
+              {error}
+            </div>
           )}
           <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
           <input
@@ -61,6 +65,12 @@ const Login = () => {
           </button>
         </form>
         <div className="border-b-2 border-amber-500 mt-4" />
+        <p className="text-center text-gray-400 text-sm mt-4">
+          Need to create an admin account?{' '}
+          <Link to="/register" className="text-amber-400 hover:underline font-medium">
+            Register here
+          </Link>
+        </p>
       </div>
     </div>
   );
