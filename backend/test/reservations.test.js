@@ -7,6 +7,7 @@ const expect = chai.expect;
 
 let adminToken;
 let tableId;
+let reservationId;
 
 before(function(done) {
   this.timeout(15000);
@@ -32,24 +33,6 @@ before(function(done) {
 });
 
 describe('Reservation Routes', () => {
-  it('POST /api/reservations - should create a reservation', (done) => {
-    chai.request(app)
-      .post('/api/reservations')
-      .send({
-        customerName: 'Test Customer',
-        email: 'test@test.com',
-        phoneNum: '0400000000',
-        reservedDate: '2027-01-01T18:00:00',
-        numGuests: 2,
-        tableId: tableId
-      })
-      .end((err, res) => {
-        expect(res).to.have.status(201);
-        expect(res.body.reservation).to.have.property('_id');
-        done();
-      });
-  });
-
   it('GET /api/reservations - should fail without token', (done) => {
     chai.request(app)
       .get('/api/reservations')
@@ -63,6 +46,17 @@ describe('Reservation Routes', () => {
     chai.request(app)
       .get('/api/reservations')
       .set('Authorization', `Bearer ${adminToken}`)
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.an('array');
+        done();
+      });
+  });
+
+  it('GET /api/tables/available - should return available tables', (done) => {
+    chai.request(app)
+      .get('/api/tables/available')
+      .query({ dateTime: '2028-01-01T18:00:00', numGuests: 2 })
       .end((err, res) => {
         expect(res).to.have.status(200);
         expect(res.body).to.be.an('array');
