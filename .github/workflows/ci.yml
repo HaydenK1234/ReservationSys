@@ -52,7 +52,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/sampleapp_IFQ636
+            cd ~/ReservationSys
             git pull origin main
 
             cd backend
