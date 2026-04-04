@@ -55,7 +55,7 @@ const createReservation = async (req, res) => {
       `Table: ${table.location} (${table.seats} seats). ` +
       `Expected guests: ${numGuests}. ` +
       `Reservation ID: ${reservation._id}. ` +
-      `Please show this ID to staff upon arrival.`
+      `Please show this ID to staff upon arrival. Must be kept on person.`
     );
 
     return res.status(201).json({ message: 'Reservation created', reservation });
