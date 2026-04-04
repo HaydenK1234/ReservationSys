@@ -105,19 +105,30 @@ const ManageTables = () => {
     setError('');
     setSuccess('');
     try {
-      const response = await axiosInstance.post(
+        const response = await axiosInstance.post(
         `/api/tables/${selectedTable._id}/unavailable`,
         unavailForm,
         { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      setTables(tables.map(t => t._id === selectedTable._id ? response.data.table : t));
-      setSelectedTable(response.data.table);
-      setUnavailForm({ start: '', end: '', reason: 'maintenance' });
-      setSuccess('Unavailability window added.');
+        );
+        setTables(tables.map(t =>
+        t._id === selectedTable._id ? response.data.table : t
+        ));
+        setSelectedTable(response.data.table);
+        setUnavailForm({ start: '', end: '', reason: 'maintenance' });
+
+        const { reassigned, notified } = response.data;
+        if (reassigned > 0 || notified > 0) {
+        setSuccess(
+            `Window added. ${reassigned} reservation(s) automatically reassigned. ` +
+            `${notified} customer(s) notified by SMS as no alternative was available.`
+        );
+        } else {
+        setSuccess('Unavailability window added. No reservations were affected.');
+        }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add window.');
+        setError(err.response?.data?.message || 'Failed to add window.');
     }
-  };
+};
 
   const handleRemoveUnavailable = async (slotId) => {
     try {

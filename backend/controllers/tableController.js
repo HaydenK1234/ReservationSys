@@ -1,5 +1,5 @@
 const Table = require('../models/Table');
-
+const sendSMS = require('../utils/smsService');
 /**
  * GET /api/tables
  * Get all tables.
@@ -13,11 +13,6 @@ const getAllTables = async (req, res) => {
   }
 };
 
-/**
- * GET /api/tables/available
- * Get tables available at a specific datetime for a given party size.
- * Checks both bookedSlots and unavailableSlots.
- */
 const getAvailableTables = async (req, res) => {
   try {
     const { dateTime, numGuests } = req.query;
@@ -113,10 +108,94 @@ const addUnavailableSlot = async (req, res) => {
     const table = await Table.findById(req.params.id);
     if (!table) return res.status(404).json({ message: 'Table not found' });
 
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    const ONE_HOUR = 60 * 60 * 1000;
+
+    const Reservation = require('../models/Reservation');
+    const allReservations = await Reservation.find({
+      tableId: table._id,
+      status: 'confirmed'
+    });
+
+    const affected = allReservations.filter(r => {
+      const t = new Date(r.reservedDate).getTime();
+      return t >= startTime && t < endTime;
+    });
+
+    console.log('Affected reservations found:', affected.length);
+    console.log('Window start:', new Date(start).toLocaleString());
+    console.log('Window end:', new Date(end).toLocaleString());
+
+    const reassigned = [];
+    const notified = [];
+
+    for (const reservation of affected) {
+      const reservationTime = new Date(reservation.reservedDate).getTime();
+
+      const alternatives = await Table.find({
+        _id: { $ne: table._id },
+        status: 'available',
+        seats: { $gte: reservation.numGuests },
+        babyHighChair: table.babyHighChair
+      });
+
+      const available = alternatives.filter(alt => {
+        const hasBookingConflict = alt.bookedSlots.some(slot =>
+          Math.abs(new Date(slot).getTime() - reservationTime) < ONE_HOUR
+        );
+        const hasUnavailableConflict = alt.unavailableSlots.some(slot => {
+          const s = new Date(slot.start).getTime();
+          const e = new Date(slot.end).getTime();
+          return reservationTime >= s && reservationTime < e;
+        });
+        return !hasBookingConflict && !hasUnavailableConflict;
+      });
+
+      if (available.length > 0) {
+        const best = available.sort((a, b) => a.seats - b.seats)[0];
+
+        table.bookedSlots = table.bookedSlots.filter(
+          slot => new Date(slot).getTime() !== reservationTime
+        );
+
+        best.bookedSlots.push(reservation.reservedDate);
+        await best.save();
+
+        reservation.tableId = best._id;
+        await reservation.save();
+
+        await sendSMS(
+          reservation.phoneNum,
+          `Hi ${reservation.customerName}, your table at MyRestaurant on ` +
+          `${new Date(reservation.reservedDate).toLocaleString()} has been moved ` +
+          `to ${best.location} due to maintenance. ` +
+          `To make changes visit: ${process.env.FRONTEND_URL}/my-reservations`
+        );
+
+        reassigned.push(reservation._id);
+      } else {
+        await sendSMS(
+          reservation.phoneNum,
+          `Hi ${reservation.customerName}, your reservation at MyRestaurant on ` +
+          `${new Date(reservation.reservedDate).toLocaleString()} is affected by maintenance ` +
+          `and no alternative table is available. ` +
+          `To reschedule visit: ${process.env.FRONTEND_URL}/my-reservations`
+        );
+
+        notified.push(reservation._id);
+      }
+    }
+
     table.unavailableSlots.push({ start, end, reason: reason || 'maintenance' });
     await table.save();
 
-    return res.status(201).json({ message: 'Unavailability window added', table });
+    return res.status(201).json({
+      message: 'Unavailability window added',
+      table,
+      reassigned: reassigned.length,
+      notified: notified.length
+    });
   } catch (err) {
     return res.status(500).json({ message: 'Server error', error: err.message });
   }
