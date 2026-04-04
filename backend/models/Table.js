@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// data schema for tables in restaurant, provides definitions for capacity and specific availabilities
 const tableSchema = new mongoose.Schema({
   seats: {
     type: Number,
@@ -9,7 +8,7 @@ const tableSchema = new mongoose.Schema({
   location: {
     type: String,
     required: true,
-    trim: true  // eg near window, in corner, etc
+    trim: true
   },
   babyHighChair: {
     type: Boolean,
@@ -23,7 +22,14 @@ const tableSchema = new mongoose.Schema({
   bookedSlots: {
     type: [Date],
     default: []
-  }
+  },
+  unavailableSlots: [
+    {
+      start: { type: Date, required: true },
+      end: { type: Date, required: true },
+      reason: { type: String, default: 'maintenance' }
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Table', tableSchema);
