@@ -9,13 +9,10 @@ const {
 } = require('../controllers/reservationController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
-// Public routes
 router.post('/', createReservation);
-
-// Admin routes
 router.get('/', protect, adminOnly, getAllReservations);
-router.put('/:id', protect, adminOnly, updateReservation);
-router.delete('/:id', protect, adminOnly, deleteReservation);
 router.get('/:id', getReservationById);
+router.put('/:id', updateReservation);
+router.delete('/:id', protect, adminOnly, deleteReservation);
 
 module.exports = router;

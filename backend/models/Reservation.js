@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Reservation data schema containing the fields for a sole reservation
 const reservationSchema = new mongoose.Schema({
   customerName: {
     type: String,
