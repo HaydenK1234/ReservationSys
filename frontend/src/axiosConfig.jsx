@@ -1,8 +1,9 @@
 import axios from 'axios';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5001', // local
-  //baseURL: 'http://3.26.96.188:5001', // live
+  baseURL: isProduction ? '' : 'http://localhost:5001',
   headers: { 'Content-Type': 'application/json' },
 });
 
