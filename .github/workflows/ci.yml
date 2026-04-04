@@ -2,65 +2,72 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    env:
-      MONGO_URI: ${{ secrets.MONGO_URI }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      CLICKSEND_USERNAME: ${{ secrets.CLICKSEND_USERNAME }}
-      CLICKSEND_API_KEY: ${{ secrets.CLICKSEND_API_KEY }}
-      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      PORT: 5001
+    name: Run Tests
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        node-version: [20]
+    environment: MONGO_URI
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
 
-      - name: Install backend dependencies
+      - name: Print Env Secret
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
         run: |
-          cd backend
-          npm install
+          echo "MONGO_URI is set"
+          echo "JWT_SECRET is set"
+          echo "PORT is set"
 
-      - name: Run tests
+      - name: Stop Running Services
+        run: pm2 stop all || true
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
         run: |
-          cd backend
-          npm test
+          npm install -g yarn
+          yarn install
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: |
+          df -h
+          sudo rm -rf ./build
+          yarn install
+          yarn run build
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Run Backend Tests
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          CLICKSEND_USERNAME: ${{ secrets.CLICKSEND_USERNAME }}
+          CLICKSEND_API_KEY: ${{ secrets.CLICKSEND_API_KEY }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          PORT: 5001
+        working-directory: ./backend
+        run: npm test
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd ~/ReservationSys
-            git pull origin main
+      - name: Create .env File
+        run: |
+          cd ./backend
+          touch .env
+          echo "${{ secrets.PROD }}" > .env
 
-            cd backend
-            npm install
-            pm2 restart backend || pm2 start server.js --name "backend"
-
-            cd ../frontend
-            npm install
-            npm run build
-
-            pm2 save
+      - name: Start and Restart Services
+        run: |
+          pm2 start all || true
+          pm2 restart all
