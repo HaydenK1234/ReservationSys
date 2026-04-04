@@ -1,24 +1,10 @@
 
-**Assessment 1.2 (Total Marks **20**)**
+Reservation System for Restaurant. 
 
-Assignment: **Software requirements analysis and design (**Full-Stack CRUD Application Development with DevOps Practices**)**
+Two user groups, Customer (unauth) and Admin (Auth)
+Create reservations via Reservation page - Select date, number of people, and restrictions - i.e. Baby chair.
+Outputs available tables at that given date. Accepting and filling in details provides reservation ID, both on page and via ClickSend SMS
+Reservation ID is stored in MongoDB, can be used to retrieve reservation for modifications
 
-
----
-
-**Objective**
-
-For this assessment, you have already been assigned a project. Your task is to develop a system that implements CRUD (Create, Read, Update, Delete) operations based on the selected project. The system should include both a user panel and an admin panel. Depending on the nature of your chosen project, you may decide how many CRUD operations are required to support the functionality of the system. You have been provided with a starter project that includes user authentication using Node.js, React.js, and MongoDB, your should extend this application based on your assigned project requirements. Ensure that the implemented features are appropriate and meaningful for your selected project. Your project should include the following:
-In this assignment you will complete the following tasks:
-
-* **Basic Version Control using GitHub**
-* **Development, CI/CD Integration for Automated Deployment**
-* **Project report**
-
- 
----
-
-**GitHub link of the starter project: **[https://github.com/nahaQUT/sampleapp_IFQ636.git](https://github.com/nahaQUT/sampleapp_IFQ636.git)
-
----
-
+Admin panel can update tables and reservations. Tables are a separate object which reservations rely. Updating a table updates any reservations on the day of maintainance etc.
+Updating Reservations notifies User/Customer of updates to their reservations.
