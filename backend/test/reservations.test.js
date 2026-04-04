@@ -8,19 +8,25 @@ const expect = chai.expect;
 let adminToken;
 let tableId;
 
-before((done) => {
+before(function(done) {
+  this.timeout(15000);
   chai.request(app)
-    .post('/api/auth/login')
-    .send({ email: 'admin@restaurant.com', password: 'admin123' })
-    .end((err, res) => {
-      adminToken = res.body.token;
+    .post('/api/auth/register')
+    .send({ name: 'Admin', email: 'admin@restaurant.com', password: 'admin123' })
+    .end(() => {
       chai.request(app)
-        .post('/api/tables')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({ seats: 4, location: 'Test Reservation Table', babyHighChair: false })
+        .post('/api/auth/login')
+        .send({ email: 'admin@restaurant.com', password: 'admin123' })
         .end((err, res) => {
-          tableId = res.body._id;
-          done();
+          adminToken = res.body.token;
+          chai.request(app)
+            .post('/api/tables')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ seats: 4, location: 'Test Reservation Table', babyHighChair: false })
+            .end((err, res) => {
+              tableId = res.body._id;
+              done();
+            });
         });
     });
 });

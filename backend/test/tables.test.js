@@ -7,13 +7,19 @@ const expect = chai.expect;
 
 let adminToken;
 
-before((done) => {
+before(function(done) {
+  this.timeout(15000);
   chai.request(app)
-    .post('/api/auth/login')
-    .send({ email: 'admin@restaurant.com', password: 'admin123' })
-    .end((err, res) => {
-      adminToken = res.body.token;
-      done();
+    .post('/api/auth/register')
+    .send({ name: 'Admin', email: 'admin@restaurant.com', password: 'admin123' })
+    .end(() => {
+      chai.request(app)
+        .post('/api/auth/login')
+        .send({ email: 'admin@restaurant.com', password: 'admin123' })
+        .end((err, res) => {
+          adminToken = res.body.token;
+          done();
+        });
     });
 });
 
